@@ -28,7 +28,7 @@ const AddProject: React.FC = () => {
                         type="text"
                         id="name"
                         required
-                        className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
+                        className="mt-1 block w-full px-3 py-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm bg-white text-gray-900 placeholder-gray-500"
                         placeholder="E.g., Skyscraper Construction Phase 1"
                         value={name}
                         onChange={(e) => setName(e.target.value)}

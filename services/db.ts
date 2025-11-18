@@ -114,6 +114,11 @@ export const db = {
                 defects[index] = defect;
                 setCollection(STORAGE_KEYS.DEFECTS, defects);
             }
+        },
+        delete: (id: string) => {
+            let defects = getCollection<Defect>(STORAGE_KEYS.DEFECTS);
+            defects = defects.filter(d => d.id !== id);
+            setCollection(STORAGE_KEYS.DEFECTS, defects);
         }
     },
     checklists: {

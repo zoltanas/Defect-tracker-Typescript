@@ -45,18 +45,29 @@ const AddChecklist: React.FC = () => {
             <form onSubmit={handleSubmit} className="bg-white p-8 shadow-xl rounded-xl space-y-6">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Checklist Name</label>
-                    <input type="text" required className="w-full px-3 py-3 border rounded-md" value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Daily Safety" />
+                    <input 
+                        type="text" 
+                        required 
+                        className="w-full px-3 py-3 border border-gray-300 rounded-md bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-primary focus:border-primary shadow-sm" 
+                        value={name} 
+                        onChange={e => setName(e.target.value)} 
+                        placeholder="e.g. Daily Safety" 
+                    />
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Template</label>
-                    <select className="w-full px-3 py-3 border rounded-md bg-white" value={templateId} onChange={e => setTemplateId(e.target.value)}>
-                        <option value="">None</option>
+                    <select 
+                        className="w-full px-3 py-3 border border-gray-300 rounded-md bg-white text-gray-900 focus:outline-none focus:ring-primary focus:border-primary shadow-sm" 
+                        value={templateId} 
+                        onChange={e => setTemplateId(e.target.value)}
+                    >
+                        <option value="">None (Blank Checklist)</option>
                         {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                     </select>
                 </div>
-                <div className="flex justify-end gap-3">
-                    <button type="button" onClick={() => navigate(-1)} className="bg-gray-200 px-4 py-2 rounded">Cancel</button>
-                    <button type="submit" className="bg-primary text-white px-4 py-2 rounded">Save</button>
+                <div className="flex justify-end gap-3 pt-4 border-t">
+                    <button type="button" onClick={() => navigate(-1)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium">Cancel</button>
+                    <button type="submit" className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-md font-medium">Save</button>
                 </div>
             </form>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { db } from '../services/db';
 import { Project, Defect, Checklist, Drawing } from '../types';
+import { Trash2 } from 'lucide-react';
 
 type Tab = 'defects' | 'checklists' | 'drawings';
 
@@ -27,6 +28,15 @@ const ProjectDetail: React.FC = () => {
             setDefects(db.defects.getByProject(projectId));
             setChecklists(db.checklists.getByProject(projectId));
             setDrawings(db.drawings.getByProject(projectId));
+        }
+    };
+
+    const handleDeleteDefect = (e: React.MouseEvent, id: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (confirm('Are you sure you want to delete this defect?')) {
+            db.defects.delete(id);
+            refreshData(); // Immediately refresh the list from local storage
         }
     };
 
@@ -70,16 +80,24 @@ const ProjectDetail: React.FC = () => {
                     <ul className="divide-y divide-gray-200">
                         {defects.length === 0 && <li className="p-4 text-gray-500 text-center">No defects found.</li>}
                         {defects.map(defect => (
-                            <li key={defect.id}>
-                                <Link to={`/defect/${defect.id}`} className="block hover:bg-gray-50">
-                                    <div className="px-4 py-4 sm:px-6">
-                                        <div className="flex items-center justify-between">
+                            <li key={defect.id} className="hover:bg-gray-50 transition-colors">
+                                <Link to={`/defect/${defect.id}`} className="block px-4 py-4 sm:px-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex-grow pr-4">
                                             <p className="text-sm font-medium text-primary truncate">{defect.description}</p>
-                                            <div className="ml-2 flex-shrink-0 flex">
-                                                <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${defect.status === 'Closed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                                                    {defect.status}
-                                                </p>
-                                            </div>
+                                            <p className="text-xs text-gray-400 mt-1">{new Date(defect.creationDate).toLocaleDateString()}</p>
+                                        </div>
+                                        <div className="flex items-center gap-3 flex-shrink-0">
+                                            <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${defect.status === 'Closed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                                {defect.status}
+                                            </p>
+                                            <button 
+                                                onClick={(e) => handleDeleteDefect(e, defect.id)}
+                                                className="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-gray-100 transition-colors z-10"
+                                                title="Delete Defect"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
                                         </div>
                                     </div>
                                 </Link>
@@ -116,14 +134,18 @@ const ProjectDetail: React.FC = () => {
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                         {drawings.map(drawing => (
-                            <Link key={drawing.id} to={`/project/${projectId}/drawing/${drawing.id}`} className="block bg-white p-4 rounded-lg shadow hover:shadow-md">
-                                <div className="h-32 bg-gray-100 flex items-center justify-center mb-2 rounded">
-                                    <span className="text-gray-400 font-bold">PDF</span>
+                            <Link key={drawing.id} to={`/project/${projectId}/drawing/${drawing.id}`} className="block bg-white p-4 rounded-lg shadow hover:shadow-md transition-shadow">
+                                <div className="h-32 bg-gray-100 flex items-center justify-center mb-2 rounded overflow-hidden">
+                                    {drawing.fileDataUrl && drawing.fileDataUrl.startsWith('data:image') ? (
+                                        <img src={drawing.fileDataUrl} alt={drawing.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-gray-400 font-bold">PDF</span>
+                                    )}
                                 </div>
-                                <p className="text-sm font-medium text-gray-900 truncate">{drawing.name}</p>
+                                <p className="text-sm font-medium text-gray-900 truncate" title={drawing.name}>{drawing.name}</p>
                             </Link>
                         ))}
-                        {drawings.length === 0 && <p className="col-span-full text-gray-500">No drawings yet.</p>}
+                        {drawings.length === 0 && <p className="col-span-full text-gray-500 text-center py-8">No drawings yet.</p>}
                     </div>
                 </div>
             )}

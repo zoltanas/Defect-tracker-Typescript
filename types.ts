@@ -84,7 +84,7 @@ export interface Drawing {
     id: string;
     projectId: string;
     name: string;
-    fileDataUrl: string; // Base64 PDF data
+    fileDataUrl: string; // Base64 PDF/Image data
 }
 
 // Helper type for Dashboard
@@ -93,5 +93,11 @@ export interface ProjectStats {
     openDefects: number;
     openDefectsWithReply: number;
     openChecklists: number;
-    hasDrawings: boolean;
+    drawings: Drawing[];
+}
+
+declare global {
+    interface Window {
+        pdfjsLib: any;
+    }
 }
