@@ -1,0 +1,5 @@
+{
+  "name": "Defect Tracker",
+  "description": "A comprehensive defect tracking application for construction and engineering projects, featuring PDF annotation, image markup, checklists, and role-based access control.",
+  "requestFramePermissions": []
+}
