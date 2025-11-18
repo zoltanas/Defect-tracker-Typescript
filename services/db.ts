@@ -1,3 +1,4 @@
+
 import { User, Project, ProjectAccess, Defect, Comment, Checklist, ChecklistItem, ChecklistTemplate, Drawing, Attachment, Role } from '../types';
 
 const STORAGE_KEYS = {
@@ -66,6 +67,15 @@ export const db = {
                 users[index] = user;
                 setCollection(STORAGE_KEYS.USERS, users);
             }
+        },
+        delete: (id: string) => {
+            let users = getCollection<User>(STORAGE_KEYS.USERS);
+            users = users.filter(u => u.id !== id);
+            setCollection(STORAGE_KEYS.USERS, users);
+            // Clean up access
+            let access = getCollection<ProjectAccess>(STORAGE_KEYS.ACCESS);
+            access = access.filter(a => a.userId !== id);
+            setCollection(STORAGE_KEYS.ACCESS, access);
         }
     },
     projects: {
@@ -88,12 +98,18 @@ export const db = {
     access: {
         getAll: () => getCollection<ProjectAccess>(STORAGE_KEYS.ACCESS),
         getByUserId: (userId: string) => getCollection<ProjectAccess>(STORAGE_KEYS.ACCESS).filter(a => a.userId === userId),
+        getByProject: (projectId: string) => getCollection<ProjectAccess>(STORAGE_KEYS.ACCESS).filter(a => a.projectId === projectId),
         create: (access: Omit<ProjectAccess, 'id'>) => {
             const accesses = getCollection<ProjectAccess>(STORAGE_KEYS.ACCESS);
             const newAccess = { ...access, id: generateId() };
             accesses.push(newAccess);
             setCollection(STORAGE_KEYS.ACCESS, accesses);
             return newAccess;
+        },
+        delete: (id: string) => {
+            let accesses = getCollection<ProjectAccess>(STORAGE_KEYS.ACCESS);
+            accesses = accesses.filter(a => a.id !== id);
+            setCollection(STORAGE_KEYS.ACCESS, accesses);
         }
     },
     defects: {
