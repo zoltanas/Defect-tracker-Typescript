@@ -1,8 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { db } from '../services/db';
 import { Project, Defect, Checklist, Drawing } from '../types';
 import { Trash2 } from 'lucide-react';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 type Tab = 'defects' | 'checklists' | 'drawings';
 
@@ -14,6 +16,9 @@ const ProjectDetail: React.FC = () => {
     const [defects, setDefects] = useState<Defect[]>([]);
     const [checklists, setChecklists] = useState<Checklist[]>([]);
     const [drawings, setDrawings] = useState<Drawing[]>([]);
+
+    // Modal State
+    const [defectToDelete, setDefectToDelete] = useState<string | null>(null);
 
     useEffect(() => {
         if (projectId) {
@@ -31,12 +36,18 @@ const ProjectDetail: React.FC = () => {
         }
     };
 
-    const handleDeleteDefect = (e: React.MouseEvent, id: string) => {
+    const initiateDeleteDefect = (e: React.MouseEvent, id: string) => {
         e.preventDefault();
         e.stopPropagation();
-        if (confirm('Are you sure you want to delete this defect?')) {
-            db.defects.delete(id);
-            refreshData(); // Immediately refresh the list from local storage
+        e.nativeEvent.stopImmediatePropagation(); // Ensure no other handlers run
+        setDefectToDelete(id);
+    };
+
+    const confirmDeleteDefect = () => {
+        if (defectToDelete) {
+            db.defects.delete(defectToDelete);
+            setDefectToDelete(null);
+            refreshData(); // Force UI update immediately
         }
     };
 
@@ -80,27 +91,30 @@ const ProjectDetail: React.FC = () => {
                     <ul className="divide-y divide-gray-200">
                         {defects.length === 0 && <li className="p-4 text-gray-500 text-center">No defects found.</li>}
                         {defects.map(defect => (
-                            <li key={defect.id} className="hover:bg-gray-50 transition-colors">
-                                <Link to={`/defect/${defect.id}`} className="block px-4 py-4 sm:px-6">
+                            <li key={defect.id} className="hover:bg-gray-50 transition-colors relative group">
+                                {/* Link covers the area but has margin-right to avoid the button */}
+                                <Link to={`/defect/${defect.id}`} className="block px-4 py-4 sm:px-6 mr-16">
                                     <div className="flex items-center justify-between">
                                         <div className="flex-grow pr-4">
-                                            <p className="text-sm font-medium text-primary truncate">{defect.description}</p>
+                                            <p className="text-sm font-medium text-primary truncate group-hover:underline">{defect.description}</p>
                                             <p className="text-xs text-gray-400 mt-1">{new Date(defect.creationDate).toLocaleDateString()}</p>
                                         </div>
                                         <div className="flex items-center gap-3 flex-shrink-0">
                                             <p className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${defect.status === 'Closed' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                                                 {defect.status}
                                             </p>
-                                            <button 
-                                                onClick={(e) => handleDeleteDefect(e, defect.id)}
-                                                className="text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-gray-100 transition-colors z-10"
-                                                title="Delete Defect"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
                                         </div>
                                     </div>
                                 </Link>
+                                {/* Absolute positioning for the delete button to separate it from the Link flow */}
+                                <button 
+                                    type="button"
+                                    onClick={(e) => initiateDeleteDefect(e, defect.id)}
+                                    className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-600 p-2 rounded-full hover:bg-red-50 transition-colors cursor-pointer z-20"
+                                    title="Delete Defect"
+                                >
+                                    <Trash2 size={18} className="pointer-events-none" />
+                                </button>
                             </li>
                         ))}
                     </ul>
@@ -149,6 +163,15 @@ const ProjectDetail: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={!!defectToDelete}
+                onClose={() => setDefectToDelete(null)}
+                onConfirm={confirmDeleteDefect}
+                title="Delete Defect"
+                message="Are you sure you want to delete this defect? This action cannot be undone."
+                isDangerous={true}
+            />
         </div>
     );
 };

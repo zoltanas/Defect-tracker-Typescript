@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../services/db';
 import { Defect, Attachment, User } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { Trash2, Upload, Plus, X } from 'lucide-react';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const DefectDetail: React.FC = () => {
     const { defectId } = useParams<{ defectId: string }>();
@@ -15,6 +17,10 @@ const DefectDetail: React.FC = () => {
     const [isUploading, setIsUploading] = useState(false);
     const [viewingAttachment, setViewingAttachment] = useState<Attachment | null>(null);
 
+    // Modals
+    const [showDeleteDefectModal, setShowDeleteDefectModal] = useState(false);
+    const [attachmentToDelete, setAttachmentToDelete] = useState<string | null>(null);
+
     useEffect(() => {
         if (defectId) {
             const d = db.defects.getById(defectId);
@@ -22,9 +28,12 @@ const DefectDetail: React.FC = () => {
                 setDefect(d);
                 setCreator(db.users.getById(d.creatorId) || null);
                 setAttachments(db.attachments.getByParent(d.id));
+            } else {
+                // Defect not found
+                navigate('/dashboard', { replace: true });
             }
         }
-    }, [defectId]);
+    }, [defectId, navigate]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0 && defectId) {
@@ -55,19 +64,31 @@ const DefectDetail: React.FC = () => {
         }
     };
 
-    const handleDeleteDefect = () => {
-        if (defect && confirm('Are you sure you want to delete this defect?')) {
+    const initiateDeleteDefect = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setShowDeleteDefectModal(true);
+    };
+
+    const confirmDeleteDefect = () => {
+        if (defect) {
+            const projectId = defect.projectId;
             db.defects.delete(defect.id);
-            // Navigate explicitly to project to force refresh of list
-            navigate(`/project/${defect.projectId}`);
+            navigate(`/project/${projectId}`, { replace: true });
         }
     };
 
-    const handleDeleteAttachment = (e: React.MouseEvent, id: string) => {
-        e.stopPropagation(); // Prevent opening the popup
-        if (confirm('Delete this attachment?')) {
-            db.attachments.delete(id);
-            setAttachments(prev => prev.filter(a => a.id !== id));
+    const initiateDeleteAttachment = (e: React.MouseEvent, id: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setAttachmentToDelete(id);
+    };
+
+    const confirmDeleteAttachment = () => {
+        if (attachmentToDelete) {
+            db.attachments.delete(attachmentToDelete);
+            setAttachments(prev => prev.filter(a => a.id !== attachmentToDelete));
+            setAttachmentToDelete(null);
         }
     };
 
@@ -83,11 +104,12 @@ const DefectDetail: React.FC = () => {
                             {defect.status}
                         </span>
                         <button 
-                            onClick={handleDeleteDefect}
-                            className="text-red-600 hover:text-red-800 p-2 rounded hover:bg-red-50"
+                            type="button"
+                            onClick={initiateDeleteDefect}
+                            className="text-red-600 hover:text-red-800 p-2 rounded hover:bg-red-50 relative z-10 cursor-pointer"
                             title="Delete Defect"
                         >
-                            <Trash2 size={20} />
+                            <Trash2 size={20} className="pointer-events-none" />
                         </button>
                     </div>
                 </div>
@@ -141,16 +163,18 @@ const DefectDetail: React.FC = () => {
                                     </div>
                                     
                                     <button
-                                        onClick={(e) => handleDeleteAttachment(e, att.id)}
-                                        className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-700 z-20 shadow-sm"
+                                        type="button"
+                                        onClick={(e) => initiateDeleteAttachment(e, att.id)}
+                                        className="absolute top-1 right-1 bg-red-600 text-white p-1.5 rounded-full hover:bg-red-700 z-20 shadow-sm transition-opacity cursor-pointer"
                                         title="Delete attachment"
                                     >
-                                        <Trash2 size={16} />
+                                        <Trash2 size={16} className="pointer-events-none" />
                                     </button>
 
                                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 flex items-center justify-center transition-all pointer-events-none">
                                         {att.fileDataUrl.startsWith('data:image') && (
                                             <button 
+                                                type="button"
                                                 onClick={(e) => {
                                                     e.stopPropagation();
                                                     navigate(`/annotate/${att.id}`);
@@ -168,17 +192,18 @@ const DefectDetail: React.FC = () => {
                 </div>
 
                 <div className="mt-8 flex justify-end">
-                    <button onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded hover:bg-gray-100">Back</button>
+                    <button type="button" onClick={() => navigate(-1)} className="text-gray-600 hover:text-gray-800 font-medium px-4 py-2 rounded hover:bg-gray-100">Back</button>
                 </div>
             </div>
 
             {/* Attachment Modal */}
             {viewingAttachment && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4" onClick={() => setViewingAttachment(null)}>
-                    <div className="relative bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[95vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4 cursor-default" onClick={() => setViewingAttachment(null)}>
+                    <div className="relative bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[95vh] flex flex-col cursor-auto" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center p-4 border-b shrink-0">
                             <h3 className="text-lg font-semibold text-gray-800 truncate pr-4">{viewingAttachment.fileName}</h3>
                             <button 
+                                type="button"
                                 onClick={() => setViewingAttachment(null)} 
                                 className="text-gray-500 hover:text-gray-800 transition-colors p-1 rounded-full hover:bg-gray-100"
                             >
@@ -203,6 +228,25 @@ const DefectDetail: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Delete Confirmation Modals */}
+            <ConfirmationModal 
+                isOpen={showDeleteDefectModal}
+                onClose={() => setShowDeleteDefectModal(false)}
+                onConfirm={confirmDeleteDefect}
+                title="Delete Defect"
+                message="Are you sure you want to delete this defect? All attachments will be removed."
+                isDangerous={true}
+            />
+
+            <ConfirmationModal 
+                isOpen={!!attachmentToDelete}
+                onClose={() => setAttachmentToDelete(null)}
+                onConfirm={confirmDeleteAttachment}
+                title="Delete Attachment"
+                message="Are you sure you want to delete this attachment?"
+                isDangerous={true}
+            />
         </div>
     );
 };

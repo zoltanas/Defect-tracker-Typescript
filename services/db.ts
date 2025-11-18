@@ -116,9 +116,21 @@ export const db = {
             }
         },
         delete: (id: string) => {
+            console.log('Deleting defect:', id);
             let defects = getCollection<Defect>(STORAGE_KEYS.DEFECTS);
+            const initialLength = defects.length;
             defects = defects.filter(d => d.id !== id);
-            setCollection(STORAGE_KEYS.DEFECTS, defects);
+            
+            if (defects.length !== initialLength) {
+                setCollection(STORAGE_KEYS.DEFECTS, defects);
+                
+                // Delete associated attachments
+                let attachments = getCollection<Attachment>(STORAGE_KEYS.ATTACHMENTS);
+                attachments = attachments.filter(a => a.parentId !== id);
+                setCollection(STORAGE_KEYS.ATTACHMENTS, attachments);
+                return true;
+            }
+            return false;
         }
     },
     checklists: {

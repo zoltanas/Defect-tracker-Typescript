@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -9,14 +10,17 @@ const Register: React.FC = () => {
     const [password, setPassword] = useState('');
     const [name, setName] = useState('');
     const [company, setCompany] = useState('');
+    const [error, setError] = useState('');
     const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+        
         const existing = db.users.getByEmail(email);
         if (existing) {
-            alert('Email already exists');
+            setError('Email already exists. Please use a different email.');
             return;
         }
         const newUser = db.users.create({
@@ -36,6 +40,11 @@ const Register: React.FC = () => {
                 <div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">Create your account</h2>
                 </div>
+                {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+                        <span className="block sm:inline">{error}</span>
+                    </div>
+                )}
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="rounded-md shadow-sm -space-y-px">
                         <input

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { db } from '../services/db';
@@ -9,6 +10,7 @@ const AddTemplate: React.FC = () => {
     const [name, setName] = useState('');
     const [itemsText, setItemsText] = useState('');
     const [existingTemplates, setExistingTemplates] = useState<ChecklistTemplate[]>([]);
+    const [successMsg, setSuccessMsg] = useState('');
 
     useEffect(() => {
         setExistingTemplates(db.templates.getAll());
@@ -22,7 +24,8 @@ const AddTemplate: React.FC = () => {
         setExistingTemplates(db.templates.getAll());
         setName('');
         setItemsText('');
-        alert('Template created successfully!');
+        setSuccessMsg('Template created successfully!');
+        setTimeout(() => setSuccessMsg(''), 3000);
     };
 
     return (
@@ -36,6 +39,11 @@ const AddTemplate: React.FC = () => {
                 <div>
                     <div className="bg-white p-6 shadow-xl rounded-xl">
                         <h2 className="text-xl font-semibold mb-6 text-gray-700 border-b pb-2">Create New Template</h2>
+                        {successMsg && (
+                            <div className="mb-4 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative">
+                                {successMsg}
+                            </div>
+                        )}
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Template Name</label>
